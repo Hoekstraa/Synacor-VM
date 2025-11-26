@@ -1,0 +1,10 @@
+name = "synacorvm"
+description = "A solution to the Synacor OSCON 2012 Challenge"
+version = "0.1.0-dev"
+
+authors = ["Zoë Hoekstra"]
+maintainers = ["Zoë Hoekstra <altlockg@gmail.com>"]
+maintainers-logins = ["Hoekstraa"]
+licenses = "EUPL-1.2"
+website = ""
+tags = ["vm", "synacor", "challenge", "solution", "interpreter"]
