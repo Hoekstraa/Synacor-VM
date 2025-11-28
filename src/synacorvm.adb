@@ -17,12 +17,23 @@ begin
    Put_Line ("");
 
    loop
+      -- Put_Line (Standard_Error, "Next instruction:"
+      --                           & Hardware.Memory (Hardware.PC)'Image
+      --                           & Hardware.Memory (Hardware.PC + 1)'Image
+      --                           & Hardware.Memory (Hardware.PC + 2)'Image);
       case Hardware.Memory (Hardware.PC) is
          when 0 =>
             Put_Line (Standard_Error, "0: exit");
             exit;
-         when 6 =>
+         when 1 =>
+            -- Here we want the register number, not the value in it
             A := Hardware.Memory (Hardware.PC + 1);
+            B := Hardware.Value_From_Mem (Hardware.PC + 2);
+            Hardware.Registers (A) := B;
+            Hardware.PC_Inc (3);
+            Put_Line (Standard_Error, "1: set" & A'Image & B'Image);
+         when 6 =>
+            A := Hardware.Value_From_Mem (Hardware.PC + 1);
             Hardware.PC := Hardware.UInt15 (A);
             Put_Line (Standard_Error, "6: jmp" & A'Image);
          when 7 =>
@@ -34,15 +45,23 @@ begin
             end if;
             Put_Line (Standard_Error, "7: jt" & A'Image & B'Image);
          when 8 =>
-            A := Hardware.Memory (Hardware.PC + 1);
-            B := Hardware.Memory (Hardware.PC + 2);
+            A := Hardware.Value_From_Mem (Hardware.PC + 1);
+            B := Hardware.Value_From_Mem (Hardware.PC + 2);
             Hardware.PC_Inc (3);
             if A = 0 then
                Hardware.PC := Hardware.UInt15 (B);
             end if;
             Put_Line (Standard_Error, "8: jf" & A'Image & B'Image);
-         when 19 =>
+         when 9 =>
+            -- Here we want the memory address / register number, not the value in it
             A := Hardware.Memory (Hardware.PC + 1);
+            B := Hardware.Value_From_Mem (Hardware.PC + 2);
+            C := Hardware.Value_From_Mem (Hardware.PC + 3);
+            Hardware.PC_Inc (4);
+            Hardware.Int_To_Mem (A, UInt15(B + C));
+            Put_Line (Standard_Error, "9: add" & A'Image & B'Image & C'Image);
+         when 19 =>
+            A := Hardware.Value_From_Mem (Hardware.PC + 1);
             Put (Character'Val (Integer (A)));
             Hardware.PC_Inc (2);
          when 21 =>

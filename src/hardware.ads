@@ -24,6 +24,10 @@ package Hardware is
 
    procedure Load_Binary;
    procedure PC_Inc (amount : Integer := 1);
-   function Value_From_Mem(address : UInt16) return UInt16;
    function Value_From_Mem(address : UInt15) return UInt16;
+   procedure Value_To_Mem(address : UInt16;
+                          value : UInt16);
+   procedure Int_To_Mem(address : UInt16;
+                        value : UInt15);
+
 end Hardware;
