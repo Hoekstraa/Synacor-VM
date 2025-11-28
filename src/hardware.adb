@@ -1,5 +1,5 @@
 with Ada.Sequential_IO;
-with Ada.Text_IO;
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Hardware is
 
@@ -31,4 +31,24 @@ package body Hardware is
    begin
       PC := PC + UInt15(amount);
    end PC_Inc;
+
+
+   function Value_From_Mem(address : UInt16) return UInt16 is
+   begin
+      case address is
+         when 0 .. 2 ** 15-1 =>
+            return Memory (UInt15(address));
+         when RegisterInt =>
+            return Registers (address);
+         when others =>
+            Put_Line (Standard_Error, "Invalid address, stopping");
+            raise Constraint_Error with "Invalid address";
+      end case;
+   end Value_From_Mem;
+
+   function Value_From_Mem(address : UInt15) return UInt16 is
+   begin
+      return Value_From_Mem(UInt16(address));
+   end Value_From_Mem;
+
 end Hardware;
