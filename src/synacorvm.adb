@@ -1,6 +1,7 @@
 --  with Ada.Containers.Vectors;
 with Ada.Text_IO; use Ada.Text_IO;
 with Hardware; use Hardware;
+--  with Ada.Containers.Count_Type;
 
 procedure Synacorvm is
    --  For temporary storage of operands
@@ -32,6 +33,36 @@ begin
             Hardware.Registers (A) := B;
             Hardware.PC_Inc (3);
             Put_Line (Standard_Error, "1: set" & A'Image & B'Image);
+         when 2 =>
+            A := Hardware.Value_From_Mem (Hardware.PC + 1);
+            Hardware.PC_Inc (2);
+            Hardware.Stack.Append(A);
+            Put_Line (Standard_Error, "2: push" & A'Image);
+         when 3 =>
+            -- Here we want the memory address / register number, not the value in it
+            A := Hardware.Memory (Hardware.PC + 1);
+            Hardware.PC_Inc (2);
+            if Hardware.Stack.Is_Empty /= True then
+               Hardware.Value_To_Mem (A, Hardware.Stack.Last_Element);
+               Hardware.Stack.Delete_Last;
+            end if;
+            Put_Line (Standard_Error, "3: pop" & A'Image);
+         when 4 =>
+            -- Here we want the memory address / register number, not the value in it
+            A := Hardware.Memory (Hardware.PC + 1);
+            B := Hardware.Value_From_Mem (Hardware.PC + 2);
+            C := Hardware.Value_From_Mem (Hardware.PC + 3);
+            Hardware.PC_Inc (4);
+            Hardware.Int_To_Mem (A, (if B = C then 1 else 0));
+            Put_Line (Standard_Error, "4: eq" & A'Image & B'Image & C'Image);
+         when 5 =>
+            -- Here we want the memory address / register number, not the value in it
+            A := Hardware.Memory (Hardware.PC + 1);
+            B := Hardware.Value_From_Mem (Hardware.PC + 2);
+            C := Hardware.Value_From_Mem (Hardware.PC + 3);
+            Hardware.PC_Inc (4);
+            Hardware.Int_To_Mem (A, (if B > C then 1 else 0));
+            Put_Line (Standard_Error, "9: add" & A'Image & B'Image & C'Image);
          when 6 =>
             A := Hardware.Value_From_Mem (Hardware.PC + 1);
             Hardware.PC := Hardware.UInt15 (A);
@@ -60,13 +91,43 @@ begin
             Hardware.PC_Inc (4);
             Hardware.Int_To_Mem (A, UInt15(B + C));
             Put_Line (Standard_Error, "9: add" & A'Image & B'Image & C'Image);
+         when 12 =>
+            -- Here we want the memory address / register number, not the value in it
+            A := Hardware.Memory (Hardware.PC + 1);
+            B := Hardware.Value_From_Mem (Hardware.PC + 2);
+            C := Hardware.Value_From_Mem (Hardware.PC + 3);
+            Hardware.PC_Inc (4);
+            Hardware.Value_To_Mem (A, B and C);
+            Put_Line (Standard_Error, "12: and" & A'Image & B'Image & C'Image);
+         when 13 =>
+            -- Here we want the memory address / register number, not the value in it
+            A := Hardware.Memory (Hardware.PC + 1);
+            B := Hardware.Value_From_Mem (Hardware.PC + 2);
+            C := Hardware.Value_From_Mem (Hardware.PC + 3);
+            Hardware.PC_Inc (4);
+            Hardware.Value_To_Mem (A, B or C);
+            Put_Line (Standard_Error, "13: or" & A'Image & B'Image & C'Image);
+         when 14 =>
+            -- Here we want the memory address / register number, not the value in it
+            A := Hardware.Memory (Hardware.PC + 1);
+            B := Hardware.Value_From_Mem (Hardware.PC + 2);
+            Hardware.PC_Inc (3);
+            -- Has to be 15-bit bitwise, according to spec, unlike other bitwise ops
+            Hardware.Int_To_Mem (A, not Hardware.UInt15 (B));
+            Put_Line (Standard_Error, "14: not" & A'Image & B'Image);
+         when 17 =>
+            A := Hardware.Value_From_Mem (Hardware.PC + 1);
+            B := Hardware.Memory (Hardware.PC + 2);
+            Hardware.Stack.Append(B);
+            Hardware.PC := Hardware.UInt15(A);
+            Put_Line (Standard_Error, "17: call" & A'Image);
          when 19 =>
             A := Hardware.Value_From_Mem (Hardware.PC + 1);
             Put (Character'Val (Integer (A)));
             Hardware.PC_Inc (2);
          when 21 =>
-            Put_Line (Standard_Error, "21: noop");
             Hardware.PC_Inc (1);
+            Put_Line (Standard_Error, "21: noop");
          when others =>
             Put_Line (Standard_Error, "-- Unknown code --");
             Put_Line (Standard_Error, "PC value: " & Integer'Image (Integer (Hardware.PC)));
