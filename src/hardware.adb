@@ -20,7 +20,6 @@ package body Hardware is
          while not End_Of_File (F) loop
             Read (F, Value);
             Memory (Memory_Array_Index) := Value;
-            -- Ada.Text_IO.Put_Line (Integer'Image (Integer (Value)));
             Memory_Array_Index := Memory_Array_Index + 1;
          end loop;
          Close (F);
@@ -32,26 +31,9 @@ package body Hardware is
       PC := PC + UInt15(amount);
    end PC_Inc;
 
-
-   -- function Value_From_Mem(address : UInt16) return UInt16 is
-   -- begin
-   --    Put_Line (Standard_Error, "Pulling from mem addr" & address'Image);
-   --    Address_Value := Memory (UInt15address);
-   --    case Address_Value is
-   --       when 0 .. 2 ** 15-1 =>
-   --          return Address_Value;
-   --       when RegisterInt =>
-   --          return Registers (Address_Value);
-   --       when others =>
-   --          Put_Line (Standard_Error, "Invalid address, stopping");
-   --          raise Constraint_Error with "Invalid address";
-   --    end case;
-   -- end Value_From_Mem;
-
    function Value_From_Mem(address : UInt15) return UInt16 is
       Address_Value : UInt16;
    begin
-      --  Put_Line (Standard_Error, "Pulling from mem addr" & address'Image);
       Address_Value := Memory (address);
       case Address_Value is
          when 0 .. 2 ** 15-1 =>
@@ -67,7 +49,6 @@ package body Hardware is
    procedure Value_To_Mem(address : UInt16;
                           value : UInt16) is
    begin
-      --  Put_Line (Standard_Error, "Pushing to mem addr" & address'Image);
       case address is
          when 0 .. 2 ** 15-1 =>
             Memory (UInt15 (address)) := value;
