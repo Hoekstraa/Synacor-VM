@@ -26,9 +26,9 @@ begin
                                 & Hardware.Memory (Hardware.PC)'Image
                                 & Hardware.Memory (Hardware.PC + 1)'Image
                                 & Hardware.Memory (Hardware.PC + 2)'Image);
-      Put_Line ("Vector has " & Ada.Containers.Count_Type'Image (Hardware.Stack.Length) & " elements");
+      Put_Line (Standard_Error, "Vector has " & Ada.Containers.Count_Type'Image (Hardware.Stack.Length) & " elements");
       if Hardware.Stack.Is_Empty /= True then
-         Put_Line ("Vector has " & Integer (Hardware.Stack.First_Element)'Image);
+         Put_Line (Standard_Error, "Vector has " & Integer (Hardware.Stack.First_Element)'Image);
       end if;
       Put_Line (Standard_Error, "----------");
       case Hardware.Memory (Hardware.PC) is
@@ -100,6 +100,22 @@ begin
             Hardware.PC_Inc (4);
             Hardware.Int_To_Mem (A, UInt15(B) + UInt15(C));
             Put_Line (Standard_Error, "9: add" & A'Image & B'Image & C'Image);
+         when 10 =>
+            -- Here we want the memory address / register number, not the value in it
+            A := Hardware.Memory (Hardware.PC + 1);
+            B := Hardware.Value_From_Mem (Hardware.PC + 2);
+            C := Hardware.Value_From_Mem (Hardware.PC + 3);
+            Hardware.PC_Inc (4);
+            Hardware.Int_To_Mem (A, UInt15(B) * UInt15(C));
+            Put_Line (Standard_Error, "10: mult" & A'Image & B'Image & C'Image);
+         when 11 =>
+            -- Here we want the memory address / register number, not the value in it
+            A := Hardware.Memory (Hardware.PC + 1);
+            B := Hardware.Value_From_Mem (Hardware.PC + 2);
+            C := Hardware.Value_From_Mem (Hardware.PC + 3);
+            Hardware.PC_Inc (4);
+            Hardware.Int_To_Mem (A, UInt15(B) mod UInt15(C));
+            Put_Line (Standard_Error, "11: mod" & A'Image & B'Image & C'Image);
          when 12 =>
             -- Here we want the memory address / register number, not the value in it
             A := Hardware.Memory (Hardware.PC + 1);
@@ -124,16 +140,46 @@ begin
             -- Has to be 15-bit bitwise, according to spec, unlike other bitwise ops
             Hardware.Int_To_Mem (A, not Hardware.UInt15 (B));
             Put_Line (Standard_Error, "14: not" & A'Image & B'Image);
+         when 15 =>
+            A := Hardware.Memory (Hardware.PC + 1);
+            B := Hardware.Value_From_Mem(UInt15(Hardware.Value_From_Mem (Hardware.PC + 2)));
+            Hardware.Value_To_Mem (A, B);
+            Hardware.PC_Inc (3);
+            Put_Line (Standard_Error, "15: rmem" & A'Image & B'Image);
+         when 16 =>
+            A := Hardware.Value_From_Mem (Hardware.PC + 1);
+            B := Hardware.Value_From_Mem (Hardware.PC + 2);
+            Hardware.Value_To_Mem (A, B);
+            Hardware.PC_Inc (3);
+            Put_Line (Standard_Error, "16: wmem" & A'Image & B'Image);
          when 17 =>
             A := Hardware.Value_From_Mem (Hardware.PC + 1);
-            B := Hardware.Memory (Hardware.PC + 2);
             Hardware.Stack.Append(Hardware.UInt16(Hardware.PC + 2));
             Hardware.PC := Hardware.UInt15(A);
             Put_Line (Standard_Error, "17: call" & A'Image);
+         when 18 =>
+            if Hardware.Stack.Is_Empty /= True then
+               Hardware.PC := UInt15(Hardware.Stack.Last_Element);
+               Hardware.Stack.Delete_Last;
+            else
+               exit;
+            end if;
+            Put_Line (Standard_Error, "18: ret");
          when 19 =>
             A := Hardware.Value_From_Mem (Hardware.PC + 1);
             Put (Character'Val (Integer (A)));
             Hardware.PC_Inc (2);
+            Put_Line (Standard_Error, "19: out");
+         when 20 =>
+            A := Hardware.Value_From_Mem (Hardware.PC + 1);
+            declare
+               Ch : Character;
+            begin
+               Get(Ch);
+               Hardware.Value_To_Mem(A, UInt16 (Character'Pos(Ch)));
+            end;
+            Hardware.PC_Inc (2);
+            Put_Line (Standard_Error, "20: in");
          when 21 =>
             Hardware.PC_Inc (1);
             Put_Line (Standard_Error, "21: noop");
