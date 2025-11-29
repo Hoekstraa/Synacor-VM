@@ -3,34 +3,40 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Hardware; use Hardware;
 with Ada.Containers;
 
+With
+  Ada.Streams.Stream_IO,
+  Ada.Text_IO.Text_Streams;
+
 procedure Synacorvm is
    --  For temporary storage of operands
    A : Hardware.UInt16;
    B : Hardware.UInt16;
    C : Hardware.UInt16;
-begin
-   --  Hardware.Stack.Append (10);
-   --  Put_Line ("Vector has " & Ada.Containers.Count_Type'Image (Hardware.Stack.Length) & " elements");
 
+   Input_File : Ada.Text_IO.File_Type:= Ada.Text_IO.Standard_Input;
+
+   -- Create a stream from the Standard Input.
+   Input_Stream : Access Ada.Streams.Root_Stream_Type'Class:=
+     Ada.Text_IO.Text_Streams.Stream( File => Input_File );
+
+begin
    Put_Line ("Loading disk image into memory.");
    Hardware.Load_Binary;
    Put_Line ("Done, starting machine.");
    Put_Line ("");
 
    loop
-
       Put_Line (Standard_Error, "----------");
       Put_Line (Standard_Error, "PC value: " & Integer'Image (Integer (Hardware.PC)));
       Put_Line (Standard_Error, "PC point: " & Integer'Image (Integer (Hardware.Memory (Hardware.PC))));
       Put_Line (Standard_Error, "Next instruction:"
                                 & Hardware.Memory (Hardware.PC)'Image
                                 & Hardware.Memory (Hardware.PC + 1)'Image
-                                & Hardware.Memory (Hardware.PC + 2)'Image);
-      Put_Line (Standard_Error, "Vector has " & Ada.Containers.Count_Type'Image (Hardware.Stack.Length) & " elements");
-      if Hardware.Stack.Is_Empty /= True then
-         Put_Line (Standard_Error, "Vector has " & Integer (Hardware.Stack.First_Element)'Image);
-      end if;
+                                & Hardware.Memory (Hardware.PC + 2)'Image
+                                & Hardware.Memory (Hardware.PC + 3)'Image);
+      Put_Line (Standard_Error, "Stack has " & Ada.Containers.Count_Type'Image (Hardware.Stack.Length) & " elements");
       Put_Line (Standard_Error, "----------");
+
       case Hardware.Memory (Hardware.PC) is
          when 0 =>
             Put_Line (Standard_Error, "0: exit");
@@ -71,7 +77,7 @@ begin
             C := Hardware.Value_From_Mem (Hardware.PC + 3);
             Hardware.PC_Inc (4);
             Hardware.Int_To_Mem (A, (if B > C then 1 else 0));
-            Put_Line (Standard_Error, "9: add" & A'Image & B'Image & C'Image);
+            Put_Line (Standard_Error, "5: gt" & A'Image & B'Image & C'Image);
          when 6 =>
             A := Hardware.Value_From_Mem (Hardware.PC + 1);
             Hardware.PC := Hardware.UInt15 (A);
@@ -171,15 +177,18 @@ begin
             Hardware.PC_Inc (2);
             Put_Line (Standard_Error, "19: out");
          when 20 =>
-            A := Hardware.Value_From_Mem (Hardware.PC + 1);
+            A := Hardware.Memory (Hardware.PC + 1);
+            -- Hardware.Value_To_Mem(A, UInt16 (110));
             declare
                Ch : Character;
             begin
-               Get(Ch);
+               -- Get(Ch) doesn't pass newlines, so we use this construction.
+               Character'Read( Input_Stream, Ch );
                Hardware.Value_To_Mem(A, UInt16 (Character'Pos(Ch)));
+               Put_Line(Standard_Error, "Got char " & Character'Pos(Ch)'Img);
             end;
             Hardware.PC_Inc (2);
-            Put_Line (Standard_Error, "20: in");
+            Put_Line (Standard_Error, "20: in" & A'Image);
          when 21 =>
             Hardware.PC_Inc (1);
             Put_Line (Standard_Error, "21: noop");
