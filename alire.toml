@@ -8,3 +8,4 @@ maintainers-logins = ["Hoekstraa"]
 licenses = "EUPL-1.2"
 website = ""
 tags = ["vm", "synacor", "challenge", "solution", "interpreter"]
+executables = ["synacorvm", "explore"]
