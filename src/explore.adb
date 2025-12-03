@@ -9,7 +9,32 @@ procedure Explore is
    Pd      : Process_Descriptor;
    Args    : Argument_List_Access;
    Result  : Expect_Match;
-   Matched : Match_Array (0 .. 1);
+   Matched : Match_Array (0 .. 10);
+
+   procedure Clear_Buffer is
+   begin
+      Expect (Pd, Result, ".*", Timeout => 0);
+   end Clear_Buffer;
+
+   function Capture_Match (regex : String) return String is
+   begin
+      Expect (Pd, Result,
+              Regexp => regex,
+              Matched => Matched,
+              Timeout => 1_000);
+      case Result is
+         when Expect_Timeout =>
+            Put_Line (Standard_Error, "-- Timeout --");
+            return "";
+         when 1 .. 100  => --  Regex match
+            --  Put_Line (Standard_Error, Expect_Out(Pd));
+            --  Put_Line (Standard_Error, Expect_Out_Match(Pd));
+            return (Expect_Out (Pd) (Matched (1).First .. Matched (1).Last));
+         when others =>
+            Put_Line (Standard_Error, "-- Unknown, no match --");
+            return "";
+      end case;
+   end Capture_Match;
 
 begin
    --  First we spawn the process. Splitting the program name and the
@@ -26,41 +51,28 @@ begin
 
    --  The program is now running. Let's read it's output.
 
-   Expect (Pd, Result, Regexp => "Things of interest here:\n- ([a-z]*)\n$", Matched => Matched, Timeout => 1_000);
-   declare
-      Output : String := Expect_Out(Pd);
-      Match : String := Expect_Out_Match(Pd);
-   begin
-      --  Output := Expect_Out(Pd);
-      Put_Line ("---");
-      Put_Line (Match);
-      Put_Line ("---");
-      Put_Line (Expect_Out (Pd) (Matched (1).First .. Matched (1).Last));
-   end;
+   Put_Line (Capture_Match("== (.*) =="));
+   -- Put_Line (Capture_Match("Things of interest here:\n(?:- ([a-z]*)\n)"));
+   Put_Line (Capture_Match("Things of interest here:\n(?:- ([a-z]*)\n)+"));
 
-   Expect (Pd, Result, Regexp => "What do you do\?", Timeout => 1_000);
+   -- Get all list items BEFORE the exit list items
+   Put_Line (Capture_Match("- ([a-z]*).*There .* \d exit.*\n"));
 
-   case Result is
-      when Expect_Timeout =>
-         null;  --  never replied
-      when 1  =>
-         null;              --  the regexp matched
-         --  We then have access to all the output of gdb since the
-         --  last call to Expect, through the Expect_Out subprogram.
-         declare
-            Output : String := Expect_Out(Pd);
-         begin
-            --  Output := Expect_Out(Pd);
-            Put_Line (Output);
-         end;
-      when others =>
-         null;
+   -- Get amount of exits
 
-   end case;
+   Put_Line (Capture_Match("There .* (\d) exit.*\n"));
 
+   -- Loop for the exits
+
+   Put_Line (Capture_Match("- ([a-z]*)\n"));
+   Put_Line (Capture_Match("- ([a-z]*)\n"));
+
+   --  Ensure that the output has been fully realised.
+   Expect (Pd, Result, Regexp => "What do you do\?", Timeout => 100);
+   --  Clearing buffer just in case. The previous line should've done this already.
+   Clear_Buffer;
 
    Send (Pd, "echo 'hi'");
-
 
    --  When we are done, terminate the called program.
    Close (Pd);
